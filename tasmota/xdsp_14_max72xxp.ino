@@ -49,7 +49,7 @@ void max72xxpInitDriver() {
   }
 
 
-  matrix72xxInitMode();
+  matrix72xxpInitMode();
   //  matrix72xx.setIntensity(13); // Яркость матрицы от 0 до 15
 
 
@@ -70,11 +70,8 @@ void max72xxpOnOff(void) {
   }
 
 }
-void DisplayText(String text) {
-  
-
-  }
-}
+#ifndef UTF8RUS
+#define UTF8RUS
 String utf8rus(String source)
 {
   int i, k;
@@ -113,7 +110,7 @@ String utf8rus(String source)
   }
   return target;
 }
-
+#endif
 void max72xxpTime() {
    
 }
@@ -121,7 +118,7 @@ void max72xxpTime() {
    Interface
   \*********************************************************************************************/
 
-bool Xdsp13(byte function)
+bool Xdsp14(byte function)
 {
   if (function != 2) {
     //    Serial.print("function ");
@@ -132,7 +129,7 @@ bool Xdsp13(byte function)
   if (FUNC_DISPLAY_INIT_DRIVER == function ) {
     max72xxpInitDriver();
   }
-  else if (XDSP_13 == Settings.display_model) {
+  else if (XDSP_14 == Settings.display_model) {
     switch (function) {
 
       case FUNC_DISPLAY_MODEL:
@@ -144,7 +141,7 @@ bool Xdsp13(byte function)
         break;
       case FUNC_DISPLAY_DRAW_STRING:
        
-                max72xxpDrawStringAt();
+                
         break;
 #ifdef USE_DISPLAY_MODES1TO5          //3
       case FUNC_DISPLAY_EVERY_SECOND:
@@ -162,5 +159,5 @@ bool Xdsp13(byte function)
 
 #endif  // USE_DISPLAY_MAX7279
 //
-#endif  // USE_DISPLAY
+#endif  // Use_display
 #endif  // USE_SPI

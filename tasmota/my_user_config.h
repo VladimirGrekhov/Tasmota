@@ -607,7 +607,8 @@
 #define USE_DISPLAY_SSD1351  // [DisplayModel 9]
 //      #define USE_DISPLAY_RA8876                 // [DisplayModel 10] [I2cDriver39] (Touch)
 #define USE_DISPLAY_MAX72xx  // [DisplayModel 13]
-#define USE_DISPLAY_MAX72xxp // [DisplayModel 14]
+#define USE_DISPLAY_max72xxp // [DisplayModel 14]
+        
 #endif                       // USE_NRF24
 #endif                       // USE_SPI
 

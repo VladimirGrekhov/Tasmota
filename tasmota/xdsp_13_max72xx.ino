@@ -116,6 +116,9 @@ void DisplayText(String text) {
 
   }
 }
+#define UTF8RUS
+#ifdef UTF8RUS
+#define UTF8RUS
 String utf8rus(String source)
 {
   int i, k;
@@ -154,6 +157,7 @@ String utf8rus(String source)
   }
   return target;
 }
+#endif
 void Max72xxDrawStringAt(void) {
 
   DisplayText(utf8rus(dsp_str));
