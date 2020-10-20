@@ -21,54 +21,75 @@
 #ifdef USE_SPI
 #ifdef USE_DISPLAY
 #ifdef USE_DISPLAY_max72xxp
-
-#include <MD_Parola.h>
-#include <MD_MAX72xx.h>
-
 #warning **** MAX 72xxp ****
 #define XDSP_14 14
 
+#include <MD_Parola.h>
+#include <MD_MAX72xx.h>
+#include "font_5x7.h" // подключаем шрифт
+
+int matrix72xxp_speed = 40;
+char matrix72xxp_buf[256];
+char matrix72xxp_t_buf[10];
+int matrix72xxp_rnd;
+bool matrix72xxp_animate;
+
+String matrix72xxp_screen[20];
+bool matrix72xxp_screen_scroll[20];
+int matrix72xxp_current_screen;
+
+#define MAX_DEVICES 4 // количество матриц
+#define CS_PIN 15     // D8
+#define HARDWARE_TYPE MD_MAX72XX::FC16_HW
+MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 //max72xxpPanel matrix72xx = max72xxpPanel(15, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
-void max72xxpInitDriver() {
-  if (!Settings.display_model) {
+void max72xxpInitDriver()
+{
+  if (!Settings.display_model)
+  {
     Settings.display_model = XDSP_14;
     Serial.println("!!!DR");
   }
-  if  (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK)) { //SSPI_CS D8G15 SSPI_MOSI D7 G13 SSPI_SCLK D5 G14
-  //  Serial.println("!DEBAG PIN OK");
- //   matrix72xx = new max72xxpPanel(Pin(GPIO_SSPI_CS), numberOfHorizontalDisplays, numberOfVerticalDisplays);
-
-  } else {
-    if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_CLK)) {
+  if (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK))
+  { //SSPI_CS D8G15 SSPI_MOSI D7 G13 SSPI_SCLK D5 G14
+    //  Serial.println("!DEBAG PIN OK");
+    //   matrix72xx = new max72xxpPanel(Pin(GPIO_SSPI_CS), numberOfHorizontalDisplays, numberOfVerticalDisplays);
+  }
+  else
+  {
+    if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_CLK))
+    {
       // max72xxpPanel matrix72xx = max72xxpPanel(GPIO_SPI_CS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
-    } else {
+    }
+    else
+    {
       return;
     }
   }
 
-
   matrix72xxpInitMode();
   //  matrix72xx.setIntensity(13); // Яркость матрицы от 0 до 15
-
-
-
 }
 void matrix72xxpInitMode(void)
 {
   Serial.println("!DEBAG INIT");
-  
+  P.begin();
+  P.setInvert(false);
+  P.setFont(fontBG);
+  P.setIntensity(5); // яркость дисплея
+
 #ifdef SHOW_SPLASH
 
 #endif
-
 }
-void max72xxpOnOff(void) {
-  if (!disp_power) {
-    
+void max72xxpOnOff(void)
+{
+  if (!disp_power)
+  {
   }
-
 }
 #ifndef UTF8RUS
 #define UTF8RUS
@@ -77,42 +98,56 @@ String utf8rus(String source)
   int i, k;
   String target;
   unsigned char n;
-  char m[2] = { '0', '\0' };
+  char m[2] = {'0', '\0'};
 
-  k = source.length(); i = 0;
+  k = source.length();
+  i = 0;
 
-  while (i < k) {
-    n = source[i]; i++;
+  while (i < k)
+  {
+    n = source[i];
+    i++;
 
-    if (n >= 0xC0) {
-      switch (n) {
-        case 0xD0: {
-            n = source[i]; i++;
-            if (n == 0x81) {
-              n = 0xA8;
-              break;
-            }
-            if (n >= 0x90 && n <= 0xBF) n = n + 0x30 - 1;
-            break;
-          }
-        case 0xD1: {
-            n = source[i]; i++;
-            if (n == 0x91) {
-              n = 0xB8;
-              break;
-            }
-            if (n >= 0x80 && n <= 0x8F) n = n + 0x70 - 1;
-            break;
-          }
+    if (n >= 0xC0)
+    {
+      switch (n)
+      {
+      case 0xD0:
+      {
+        n = source[i];
+        i++;
+        if (n == 0x81)
+        {
+          n = 0xA8;
+          break;
+        }
+        if (n >= 0x90 && n <= 0xBF)
+          n = n + 0x30 - 1;
+        break;
+      }
+      case 0xD1:
+      {
+        n = source[i];
+        i++;
+        if (n == 0x91)
+        {
+          n = 0xB8;
+          break;
+        }
+        if (n >= 0x80 && n <= 0x8F)
+          n = n + 0x70 - 1;
+        break;
+      }
       }
     }
-    m[0] = n; target = target + String(m);
+    m[0] = n;
+    target = target + String(m);
   }
   return target;
 }
 #endif
-void max72xxpTime() {
-   
+void max72xxpTime()
+{
 }
 /*********************************************************************************************\
    Interface
@@ -120,44 +155,47 @@ void max72xxpTime() {
 
 bool Xdsp14(byte function)
 {
-  if (function != 2) {
+  if (function != 2)
+  {
     //    Serial.print("function ");
     //    Serial.print(function);
   }
   bool result = false;
 
-  if (FUNC_DISPLAY_INIT_DRIVER == function ) {
+  if (FUNC_DISPLAY_INIT_DRIVER == function)
+  {
     max72xxpInitDriver();
   }
-  else if (XDSP_14 == Settings.display_model) {
-    switch (function) {
+  else if (XDSP_14 == Settings.display_model)
+  {
+    switch (function)
+    {
 
-      case FUNC_DISPLAY_MODEL:
-        Serial.println("!!!M O D E L");
-        result = true;
-        break;
-      case FUNC_DISPLAY_POWER:
-        max72xxpOnOff();
-        break;
-      case FUNC_DISPLAY_DRAW_STRING:
-       
-                
-        break;
-#ifdef USE_DISPLAY_MODES1TO5          //3
-      case FUNC_DISPLAY_EVERY_SECOND:
-        if (disp_power) {
-         
-        }
-        break;
-#endif  // USE_DISPLAY_MODES1TO5
+    case FUNC_DISPLAY_MODEL:
+      Serial.println("!!!M O D E L");
+      result = true;
+      break;
+    case FUNC_DISPLAY_POWER:
+      max72xxpOnOff();
+      break;
+    case FUNC_DISPLAY_DRAW_STRING:
+
+      P.displayText("Hello", PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+      P.displayAnimate();
+      break;
+#ifdef USE_DISPLAY_MODES1TO5 //3
+    case FUNC_DISPLAY_EVERY_SECOND:
+      if (disp_power)
+      {
+      }
+      break;
+#endif // USE_DISPLAY_MODES1TO5
     }
   }
   return result;
 }
 
-
-
-#endif  // USE_DISPLAY_MAX7279
+#endif // USE_DISPLAY_MAX7279
 //
-#endif  // Use_display
-#endif  // USE_SPI
+#endif // Use_display
+#endif // USE_SPI
