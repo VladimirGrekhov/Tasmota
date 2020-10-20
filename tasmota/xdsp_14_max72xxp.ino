@@ -41,7 +41,8 @@ int matrix72xxp_current_screen;
 #define MAX_DEVICES 4 // количество матриц
 #define CS_PIN 15     // D8
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
-MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
+//MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
+MD_Parola *max72xxp;
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 //max72xxpPanel matrix72xx = max72xxpPanel(15, numberOfHorizontalDisplays, numberOfVerticalDisplays);
@@ -55,8 +56,8 @@ void max72xxpInitDriver()
   }
   if (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK))
   { //SSPI_CS D8G15 SSPI_MOSI D7 G13 SSPI_SCLK D5 G14
-    //  Serial.println("!DEBAG PIN OK");
-    //   matrix72xx = new max72xxpPanel(Pin(GPIO_SSPI_CS), numberOfHorizontalDisplays, numberOfVerticalDisplays);
+    Serial.println("!DEBAG PIN OK");
+    max72xxp = new MD_Parola(HARDWARE_TYPE, Pin(GPIO_SSPI_CS), MAX_DEVICES);
   }
   else
   {
@@ -76,12 +77,14 @@ void max72xxpInitDriver()
 void matrix72xxpInitMode(void)
 {
   Serial.println("!DEBAG INIT");
-  P.begin();
-  P.setInvert(false);
-  P.setFont(fontBG);
-  P.setIntensity(5); // яркость дисплея
-
+  max72xxp->begin();
+  max72xxp->setInvert(false);
+  max72xxp->setFont(fontBG);
+  max72xxp->setIntensity(5); // яркость дисплея
+#define SHOW_SPLASH
 #ifdef SHOW_SPLASH
+  max72xxp->displayText("max7219", PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+  max72xxp->displayAnimate();
 
 #endif
 }
@@ -180,11 +183,22 @@ bool Xdsp14(byte function)
       break;
     case FUNC_DISPLAY_DRAW_STRING:
 
-      P.displayText("Hello", PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
-      P.displayAnimate();
+      max72xxp->displayText(dsp_str, PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+      max72xxp->displayAnimate();
       break;
 #ifdef USE_DISPLAY_MODES1TO5 //3
     case FUNC_DISPLAY_EVERY_SECOND:
+      char line[7];
+      if (RtcTime.second & 1) {
+      snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" ), RtcTime.hour, RtcTime.minute);  // [ 12:34:56 ]
+      }else
+      {
+              snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" ), RtcTime.hour, RtcTime.minute);  // [ 12:34:56 ]
+
+      }
+      
+      max72xxp->displayText(line, PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+      max72xxp->displayAnimate();
       if (disp_power)
       {
       }
