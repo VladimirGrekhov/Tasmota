@@ -28,4 +28,4 @@ platformio_tasmota_cenv.ini
 *.bak
 *.code-workspace
 
-lib
+
