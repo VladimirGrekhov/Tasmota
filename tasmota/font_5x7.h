@@ -1,4 +1,5 @@
 // Data file for UTF-8 example user defined fonts
+#pragma once
 MD_MAX72XX::fontType_t ExtASCII[] PROGMEM =
     {
         0,                               // 0 - 'Unused'
@@ -60,7 +61,8 @@ MD_MAX72XX::fontType_t ExtASCII[] PROGMEM =
         5, 54, 73, 73, 73, 54,           // 56 - '8'
         5, 70, 73, 73, 41, 30,           // 57 - '9'
         1, 20,                           // 58 - ':'
-        2, 128, 104,                     // 59 - ';'
+        1, 0,                            // 59 - ';'
+//        2, 128, 104,                     // 59 - ';'
         4, 8, 20, 34, 65,                // 60 - '<'
         5, 20, 20, 20, 20, 20,           // 61 - '='
         4, 65, 34, 20, 8,                // 62 - '>'

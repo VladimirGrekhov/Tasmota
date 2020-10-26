@@ -26,24 +26,21 @@
 
 #include <MD_Parola.h>
 #include <MD_MAX72xx.h>
+#include "5bite_rus.h" // подключаем внешний шрифт
 #include "font_5x7.h" // подключаем шрифт
 
-int matrix72xxp_speed = 40;
-char matrix72xxp_buf[256];
-char matrix72xxp_t_buf[10];
-int matrix72xxp_rnd;
-bool matrix72xxp_animate;
+char max7219[6] = "m7219";
+char max_buf[256];
 
-String matrix72xxp_screen[20];
-bool matrix72xxp_screen_scroll[20];
-int matrix72xxp_current_screen;
+char matrix72xxp_buf[256];
+
 
 #define MAX_DEVICES 4 // количество матриц
 #define CS_PIN 15     // D8
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
 //MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 MD_Parola *max72xxp;
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+
 
 //max72xxpPanel matrix72xx = max72xxpPanel(15, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
@@ -83,7 +80,8 @@ void matrix72xxpInitMode(void)
   max72xxp->setIntensity(5); // яркость дисплея
 #define SHOW_SPLASH
 #ifdef SHOW_SPLASH
-  max72xxp->displayText("max7219", PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+  
+  max72xxp->displayText(max7219, PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
   max72xxp->displayAnimate();
 
 #endif
@@ -94,57 +92,81 @@ void max72xxpOnOff(void)
   {
   }
 }
-#ifndef UTF8RUS
-#define UTF8RUS
-String utf8rus(String source)
+#ifndef UTF8RUSm
+#define UTF8RUSm
+String utf8rus_m(String source)
 {
+  bool up = false;
+  if (up == true) source.toUpperCase();
   int i, k;
   String target;
   unsigned char n;
-  char m[2] = {'0', '\0'};
-
-  k = source.length();
-  i = 0;
-
-  while (i < k)
-  {
-    n = source[i];
-    i++;
-
-    if (n >= 0xC0)
-    {
-      switch (n)
-      {
-      case 0xD0:
-      {
-        n = source[i];
-        i++;
-        if (n == 0x81)
-        {
-          n = 0xA8;
+  k = source.length(); i = 0;
+  while (i < k) {
+    n = source[i]; i++;
+    switch (n) {
+      case 208: {
+          n = source[i]; i++;
+          if (n == 134) { n = 143; break; }  // І
+          if (n == 129) { n = 168; break; }
+          if (n >= 144 && n <= 191) n = n + 48;
+          if (n >= 224 && up == true) n = n - 32;
           break;
         }
-        if (n >= 0x90 && n <= 0xBF)
-          n = n + 0x30 - 1;
-        break;
-      }
-      case 0xD1:
-      {
-        n = source[i];
-        i++;
-        if (n == 0x91)
-        {
-          n = 0xB8;
+      case 209: {
+          n = source[i]; i++;
+          if (n == 150) { n = 144; break; }  // і
+          if (n == 145) { n = 184; break; }
+          if (n >= 128 && n <= 143) n = n + 112;
+          if (n >= 224 && up == true) n = n - 32;
           break;
         }
-        if (n >= 0x80 && n <= 0x8F)
-          n = n + 0x70 - 1;
+      case 210: {
+          n = source[i]; i++;
+          switch (n) {
+            case 146: n = 129; break; // Ғ
+            case 147: n = 130; break; // ғ
+            case 154: n = 131; break; // Қ
+            case 155: n = 132; break; // қ
+            case 162: n = 133; break; // Ң
+            case 163: n = 134; break; // ң
+            case 176: n = 137; break; // Ұ
+            case 177: n = 138; break; // ұ
+            case 174: n = 139; break; // Ү
+            case 175: n = 140; break; // ү
+            case 186: n = 141; break; // Һ
+            case 187: n = 142; break; // h
+            break;
+          }
+          break;
+        }
+      case 211: {
+          n = source[i]; i++;
+          switch (n) {
+            case 152: n = 127; break; // Ә
+            case 153: n = 128; break; // ә
+            case 168: n = 135; break; // Ө
+            case 169: n = 136; break; // ө
+            break;
+          }
+          break;
+        }
         break;
-      }
+      case 226: {
+        n = source[i]; i++;
+          switch (n) {
+            case 132:{
+              n = source[i]; i++;
+                switch (n) {
+                  case 150: {
+                    n = 35; break; // №
+                  }
+                }
+            }
+          }
       }
     }
-    m[0] = n;
-    target = target + String(m);
+    target += char(n);
   }
   return target;
 }
@@ -182,21 +204,25 @@ bool Xdsp14(byte function)
       max72xxpOnOff();
       break;
     case FUNC_DISPLAY_DRAW_STRING:
-
-      max72xxp->displayText(dsp_str, PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+      
+      
+      utf8rus_m(dsp_str).toCharArray(max_buf, 256);
+             
+      max72xxp->displayText(max_buf, PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
       max72xxp->displayAnimate();
       break;
 #ifdef USE_DISPLAY_MODES1TO5 //3
     case FUNC_DISPLAY_EVERY_SECOND:
       char line[7];
-      if (RtcTime.second & 1) {
-      snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" ), RtcTime.hour, RtcTime.minute);  // [ 12:34:56 ]
-      }else
+      if (RtcTime.second & 1)
       {
-              snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" ), RtcTime.hour, RtcTime.minute);  // [ 12:34:56 ]
-
+        snprintf_P(line, sizeof(line), PSTR(" %02d" ":" "%02d"), RtcTime.hour, RtcTime.minute); // [ 12:34:56 ]
       }
-      
+      else
+      {
+        snprintf_P(line, sizeof(line), PSTR(" %02d" ";" "%02d"), RtcTime.hour, RtcTime.minute); // [ 12:34:56 ]
+      }
+
       max72xxp->displayText(line, PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
       max72xxp->displayAnimate();
       if (disp_power)
